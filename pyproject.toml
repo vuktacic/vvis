@@ -1,0 +1,18 @@
+[project]
+name = "vvis"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=2.5.1",
+    "pyqtgraph>=0.14.0",
+    "pyserial>=3.5",
+    "pyside6>=6.11.1",
+]
+
+[dependency-groups]
+dev = [
+    "basedpyright>=1.39.9",
+    "ruff>=0.16.0",
+]

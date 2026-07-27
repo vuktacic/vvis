@@ -2,10 +2,11 @@ import threading
 import queue
 import time
 
+import parser
 import relay
 
-
 commands = queue.Queue()
+points = queue.Queue()
 
 
 def terminal() -> None:
@@ -19,8 +20,8 @@ def terminal() -> None:
 
 
 def main():
-    relay.connect("loop://", 115200, 1.0)
-    # relay.connect("/dev/ttyV0", 115200, 1.0)
+    # relay.connect("loop://", 115200, 1.0)
+    relay.connect("/dev/ttyUSB0", 115200, 1.0)
 
     terminal_thread = threading.Thread(
         target=terminal,
@@ -42,11 +43,23 @@ def main():
         except queue.Empty:
             pass
 
+        try:
+            point = points.get_nowait()
+
+        except queue.Empty:
+            pass
+
 
         # Handle incoming serial messages
         response = relay.read()
 
-        if response is not None:
+        if response is not None and response.startswith("scan_data"):
+            point = parser.parse(response)
+
+            if point is not None:
+                points.put(point)
+
+        elif response is not None:
             print(response)
 
 

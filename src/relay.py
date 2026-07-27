@@ -1,17 +1,17 @@
-import serial
 import threading
-
 from queue import Queue, Empty
+import serial
 
 
-ser = None
+
+SER = None
 incoming = Queue()
 
 
 def connect(port: str, baudrate: int = 115200, timeout: float = 1.0) -> None:
-    global ser
+    global SER
 
-    ser = serial.serial_for_url(
+    SER = serial.serial_for_url(
         port,
         baudrate=baudrate,
         timeout=timeout
@@ -26,20 +26,20 @@ def connect(port: str, baudrate: int = 115200, timeout: float = 1.0) -> None:
 
 
 def _reader() -> None:
-    assert ser is not None, "Connection not valid."
+    assert SER is not None, "Connection not valid."
 
     while True:
-        if ser.in_waiting:
-            message = ser.readline().decode("utf-8").strip()
+        if SER.in_waiting:
+            message = SER.readline().decode("utf-8").strip()
 
             if message:
                 incoming.put(message)
 
 
 def send(message: str) -> None:
-    assert ser is not None, "Connection not valid."
+    assert SER is not None, "Connection not valid."
 
-    ser.write((message + "\n").encode("utf-8"))
+    SER.write((message + "\n").encode("utf-8"))
 
 
 def read() -> str | None:
@@ -50,6 +50,6 @@ def read() -> str | None:
 
 
 def close() -> None:
-    assert ser is not None, "Connection not valid."
+    assert SER is not None, "Connection not valid."
 
-    ser.close()
+    SER.close()

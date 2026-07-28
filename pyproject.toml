@@ -6,9 +6,9 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "numpy>=2.5.1",
-    "pyqtgraph>=0.14.0",
+    "pyqt6>=6.11.0",
     "pyserial>=3.5",
-    "pyside6>=6.11.1",
+    "pyvista>=0.48.4",
 ]
 
 [dependency-groups]

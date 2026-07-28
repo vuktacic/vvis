@@ -1,13 +1,14 @@
 import threading
 import queue
-import time
+import numpy as np
 
 import parser
 import relay
+import viewer
 
 commands = queue.Queue()
 points = queue.Queue()
-
+view = viewer.Viewer()
 
 def terminal() -> None:
     while True:
@@ -18,10 +19,30 @@ def terminal() -> None:
         if command == "quit":
             break
 
-
-def main():
+def point_processor() -> None:
     # relay.connect("loop://", 115200, 1.0)
     relay.connect("/dev/ttyUSB0", 115200, 1.0)
+
+    while True:
+        response = relay.read()
+
+        if response and response.startswith("scan_data"):
+            point = parser.parse(response)
+
+            if point is not None:
+                points.put(point)
+        elif response is not None:
+            print(response)
+
+
+def main():
+    view.show()
+
+    processor = threading.Thread(
+        target=point_processor,
+        daemon=True
+    )
+    processor.start()
 
     terminal_thread = threading.Thread(
         target=terminal,
@@ -44,26 +65,27 @@ def main():
             pass
 
         try:
-            point = points.get_nowait()
-
+            first_point = points.get(timeout=0.01)
         except queue.Empty:
-            pass
+            first_point = None
 
+        if first_point is not None:
+            batch = [first_point]
 
-        # Handle incoming serial messages
-        response = relay.read()
+            while True:
+                try:
+                    batch.append(points.get_nowait())
+                except queue.Empty:
+                    break
 
-        if response is not None and response.startswith("scan_data"):
-            point = parser.parse(response)
+            cartesian_points = np.asarray(
+                [viewer.spherical_to_cartesian(point) for point in batch],
+                dtype=np.float32,
+            )
 
-            if point is not None:
-                points.put(point)
+            view.add_points(cartesian_points)
 
-        elif response is not None:
-            print(response)
-
-
-        time.sleep(0.01)
+        view.render()
 
 
     relay.close()
